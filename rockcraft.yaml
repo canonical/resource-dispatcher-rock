@@ -7,7 +7,7 @@ license: Apache-2.0
 
 services:
   resource-dispatcher:
-    command: python3 /app/main.py
+    command: /bin/python3 /app/main.py
     override: replace
     startup: enabled
 
@@ -15,40 +15,17 @@ platforms:
   amd64:
 
 parts:
-  # FIXME: If we keep these dependecies we get a conflict with python-packages section while running rockcraft pack:
-  #
-  # execute action main-dependencies:Action(part_name='main-dependencies', step=Step.STAGE, action_type=ActionType.RUN, reason=None, project_vars=None, properties=ActionProperties(changed_files=None, changed_dirs=None))
-  # Failed to stage: parts list the same file with different contents or permissions.
-  # Detailed information: Parts 'python-packages' and 'main-dependencies' list the following files, but with different contents or permissions:
-  # lib64
-  #
-  # main-dependencies:
-  #   plugin: nil
-  #   stage-packages:
-  #     - python3.10
-  #     - python3-pip
-  #     - tzdata
-
-  security-team-requirement:
-    plugin: nil
-    override-build: |
-      mkdir -p /usr/share/rocks
-      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > /usr/share/rocks/dpkg.query
-
   resource-dispatcher:
-    plugin: dump
-    source: resource_dispatcher
-    organize:
-      '*' : app/
-
-  requirements:
-    plugin: dump
-    source: '.'
-    organize:
-      'requirements*' : app/
-
-  python-packages:
-    plugin: python
     source: .
+    plugin: python
+    stage-packages:
+      - python3-venv
+      - tzdata
     python-requirements:
       - requirements.txt
+
+  resources:
+    source: resource_dispatcher
+    plugin: dump
+    organize:
+      "*": "app/"
