@@ -38,6 +38,18 @@ skopeo --insecure-policy copy oci-archive:resource-dispatcher_1.0_beta_amd64.roc
 docker run -p 80:80 --rm dispatcher:1.0_beta
 ```
 
+and you'll see `resource-dispatcher` running:
+
+```shell
+2023-05-05T10:21:36.245Z [pebble] Started daemon.
+2023-05-05T10:21:36.268Z [pebble] POST /v1/services 22.19668ms 202
+2023-05-05T10:21:36.268Z [pebble] Started default services with change 1.
+2023-05-05T10:21:36.285Z [pebble] Service "resource-dispatcher" starting: /bin/python3 /app/main.py
+2023-05-05T10:21:36.387Z [resource-dispatcher] 2023-05-05 10:21:36,387 - server - INFO - Resource dispatcher service alive
+2023-05-05T10:21:36.389Z [resource-dispatcher] 2023-05-05 10:21:36,389 - server - INFO - Serving sync server forever on port: 80, for label: user.kubeflow.org/enabled, on folder: ./resources
+
+```
+
 The configuration of the server can be overridden by specifying the following parameters for resource_dispatcher/main.py:
 
 - `--port -p (env. PORT)` to specify on which port the dispatcher server will run (default 80)
