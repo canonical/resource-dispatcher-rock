@@ -7,7 +7,6 @@ The following tools are required to build ROCK image manually:
 To install tools:
 ```
 sudo snap install rockcraft --classic --edge
-sudo snap install skopeo --edge --devmode
 ```
 
 To build ROCK image manually:
