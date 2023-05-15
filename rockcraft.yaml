@@ -1,15 +1,20 @@
 name: resource-dispatcher
 summary: Resource dispatcher in a Rock
-description: "Resource dispatcher" # TODO: Write better desc
-version: "1.0_beta"
+description: |
+  HTTP server that should be used in the Kubernetes meta-controller charm called resource-dispatcher.
+  For each GET request on the /sync path, the resource dispatcher will generate Kubernetes manifests 
+  that need to be injected into the given Kubernetes namespace. Information about the Kubernetes 
+  namespace should be included in the body of the request. 
+version: "1.0"
 base: ubuntu:22.04
 license: Apache-2.0
 
 services:
   resource-dispatcher:
-    command: /bin/python3 /app/main.py
+    command: /bin/python3 /main.py
     override: replace
     startup: enabled
+    user: ubuntu
 
 platforms:
   amd64:
@@ -22,16 +27,23 @@ parts:
       (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > ${CRAFT_PART_INSTALL}/usr/share/rocks/dpkg.query
 
   resource-dispatcher:
-    source: .
+    source: https://github.com/canonical/resource-dispatcher-image.git
     plugin: python
     stage-packages:
       - python3-venv
       - tzdata
     python-requirements:
       - requirements.txt
-
-  resources:
-    source: resource_dispatcher
-    plugin: dump
-    organize:
-      "*": "app/"
+    override-build: |
+      craftctl default
+      cp -a resource_dispatcher/. $CRAFT_PART_INSTALL
+  
+  non-root-user:
+    plugin: nil
+    after: [ubuntu]
+    overlay-script: |
+      # Create a user in the $CRAFT_OVERLAY chroot
+      groupadd -R $CRAFT_OVERLAY -g 1001 ubuntu
+      useradd -R $CRAFT_OVERLAY -M -r -u 1001 -g ubuntu ubuntu
+    override-prime: |
+      craftctl default
