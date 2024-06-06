@@ -1,6 +1,6 @@
-# Resource dispatcher ROCK OCI image
+# Resource dispatcher rock OCI image
 
-The following tools are required to build ROCK image manually:
+The following tools are required to build rock image manually:
 - `rockcraft' - A tool to create OCI images.
 - `skopeo` - A tool to operate on container images and registries.
 
@@ -9,7 +9,7 @@ To install tools:
 sudo snap install rockcraft --classic --edge
 ```
 
-To build ROCK image manually:
+To build rock image manually:
 ```
 rockcraft pack
 ```
