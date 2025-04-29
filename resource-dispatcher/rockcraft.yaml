@@ -5,8 +5,8 @@ description: |
   For each GET request on the /sync path, the resource dispatcher will generate Kubernetes manifests 
   that need to be injected into the given Kubernetes namespace. Information about the Kubernetes 
   namespace should be included in the body of the request. 
-version: "1.0"
-base: ubuntu:22.04
+version: "2.0"
+base: ubuntu@22.04
 license: Apache-2.0
 
 services:
@@ -25,7 +25,7 @@ parts:
     override-build: |
       mkdir -p ${CRAFT_PART_INSTALL}/usr/share/rocks
       (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > ${CRAFT_PART_INSTALL}/usr/share/rocks/dpkg.query
-
+  
   resource-dispatcher:
     source: https://github.com/canonical/resource-dispatcher-image.git
     plugin: python
@@ -40,7 +40,7 @@ parts:
   
   non-root-user:
     plugin: nil
-    after: [ubuntu]
+    after: [resource-dispatcher]
     overlay-script: |
       # Create a user in the $CRAFT_OVERLAY chroot
       groupadd -R $CRAFT_OVERLAY -g 1001 ubuntu
