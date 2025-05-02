@@ -2,14 +2,14 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 #
-import tenacity
+import pytest
 import subprocess
 import requests
 import json
+import tenacity
 
 from charmed_kubeflow_chisme.rock import CheckRock
 
-# Retry if the server is not ready
 @tenacity.retry(
     stop=tenacity.stop_after_attempt(5),
     wait=tenacity.wait_fixed(2)
@@ -34,30 +34,26 @@ def post_sync_request(url):
     response.raise_for_status()
     return response.json()
 
-def main():
-    """Test running container and /sync endpoint."""
+@pytest.fixture(scope="module")
+def running_container():
     check_rock = CheckRock("rockcraft.yaml")
     rock_image = check_rock.get_name()
     rock_version = check_rock.get_version()
-    LOCAL_ROCK_IMAGE = f"{rock_image}:{rock_version}"
+    local_image = f"{rock_image}:{rock_version}"
 
-    print(f"Running {LOCAL_ROCK_IMAGE}")
-    container_id = subprocess.run(
-        ["docker", "run", "-d", "-p", "80:80", LOCAL_ROCK_IMAGE],
-        stdout=subprocess.PIPE
-    ).stdout.decode('utf-8')
-    container_id = container_id[0:12]
+    print(f"Running container: {local_image}")
+    result = subprocess.run(
+        ["docker", "run", "-d", "-p", "80:80", local_image],
+        stdout=subprocess.PIPE,
+        check=True
+    )
+    container_id = result.stdout.decode('utf-8')[:12]
 
-    try:
-        # Try to POST to the /sync endpoint
-        output = post_sync_request("http://0.0.0.0/sync")
+    yield container_id
 
-        # (Optional) validate output if needed
-        assert isinstance(output, dict)
-    finally:
-        # Cleanup container no matter what
-        subprocess.run(["docker", "stop", container_id])
-        subprocess.run(["docker", "rm", container_id])
+    subprocess.run(["docker", "stop", container_id])
+    subprocess.run(["docker", "rm", container_id])
 
-if __name__ == "__main__":
-    main()
+def test_sync_endpoint(running_container):
+    output = post_sync_request("http://0.0.0.0/sync")
+    assert isinstance(output, dict)
