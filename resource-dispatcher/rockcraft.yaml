@@ -9,12 +9,14 @@ version: "3.1"
 base: ubuntu@22.04
 license: Apache-2.0
 
+run-user: _daemon_
+
 services:
   resource-dispatcher:
     command: /bin/python3 /main.py
     override: replace
     startup: enabled
-    user: ubuntu
+    user: _daemon_
 
 platforms:
   amd64:
@@ -28,7 +30,6 @@ parts:
   
   resource-dispatcher:
     source: https://github.com/canonical/resource-dispatcher-image.git
-    source-branch: fix/daemon-user-permissions
     plugin: python
     stage-packages:
       - python3-venv
@@ -43,8 +44,7 @@ parts:
     plugin: nil
     after: [resource-dispatcher]
     overlay-script: |
-      # Create a user in the $CRAFT_OVERLAY chroot
-      groupadd -R $CRAFT_OVERLAY -g 1001 ubuntu
-      useradd -R $CRAFT_OVERLAY -M -r -u 1001 -g ubuntu ubuntu
+      chown -R 584792:584792 $CRAFT_PART_INSTALL 
+      chmod -R 770 $CRAFT_PART_INSTALL
     override-prime: |
       craftctl default
