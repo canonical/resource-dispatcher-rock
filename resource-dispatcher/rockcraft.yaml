@@ -28,6 +28,7 @@ parts:
   
   resource-dispatcher:
     source: https://github.com/canonical/resource-dispatcher-image.git
+    source-branch: fix/daemon-user-permissions
     plugin: python
     stage-packages:
       - python3-venv
