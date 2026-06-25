@@ -32,7 +32,7 @@ jobs:
     # Build the rock only if the application tests passed or were skipped
     # (i.e. no application changes in this PR).
     if: ${{ !cancelled() && (needs.app-tests.result == 'success' || needs.app-tests.result == 'skipped') }}
-    uses: canonical/charmed-kubeflow-workflows/.github/workflows/get-rocks-modified-and-build-scan-test-publish.yaml@main
+    uses: canonical/charmed-kubeflow-workflows/.github/workflows/get-rocks-modified-and-build-scan-test-publish.yaml@fix/scope-rock-integration-tests
     permissions:
       pull-requests: read
     secrets: inherit
