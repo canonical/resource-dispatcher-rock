@@ -13,8 +13,10 @@ jobs:
     outputs:
       app: ${{ steps.filter.outputs.app }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: dorny/paths-filter@v3
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - uses: dorny/paths-filter@v4
       id: filter
       with:
         filters: |
@@ -36,8 +38,3 @@ jobs:
     permissions:
       pull-requests: read
     secrets: inherit
-    with:
-      microk8s-channel: 1.32-strict/stable
-      juju-channel: 3.6/stable
-      python-version: "3.10"
-      rockcraft-channel: latest/stable
