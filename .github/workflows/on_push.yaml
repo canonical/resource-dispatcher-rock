@@ -8,7 +8,31 @@ on:
 
 jobs:
 
+  changes:
+    name: Detect application changes
+    runs-on: ubuntu-24.04
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          app:
+            - 'resource-dispatcher/app/**'
+
+  app-tests:
+    name: Application tests
+    needs: [changes]
+    if: ${{ needs.changes.outputs.app == 'true' }}
+    uses: ./.github/workflows/test_application.yaml
+
   on-push:
+    needs: [app-tests]
+    # Build the rock only if the application tests passed or were skipped
+    # (i.e. no application changes in this push).
+    if: ${{ !cancelled() && (needs.app-tests.result == 'success' || needs.app-tests.result == 'skipped') }}
     uses: canonical/charmed-kubeflow-workflows/.github/workflows/get-rocks-modified-and-build-scan-test-publish.yaml@main
     permissions:
       pull-requests: read
