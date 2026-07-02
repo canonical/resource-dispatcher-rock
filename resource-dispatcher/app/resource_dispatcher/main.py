@@ -34,7 +34,7 @@ if __name__ == "__main__":
         "--folder",
         "-f",
         type=str,
-        help="Folder wehre resource templates should be stored",
+        help="Folder where resource templates should be stored",
         action=EnvDefault,
         envvar="TEMPLATES_FOLDER",
         default="./resources",

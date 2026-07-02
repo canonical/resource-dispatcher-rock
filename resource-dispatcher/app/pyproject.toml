@@ -38,3 +38,54 @@ docstring-convention = "google"
 copyright-check = "True"
 copyright-author = "Canonical Ltd."
 copyright-regexp = "Copyright\\s\\d{4}([-,]\\d{4})*\\s+%(author)s"
+
+[project]
+name = "resource-dispatcher"
+version = "3.3"
+description = "HTTP server used by the resource-dispatcher Kubernetes meta-controller charm."
+requires-python = ">=3.10,<4.0"
+# Runtime dependencies of the application (installed into the rock).
+# Exported to requirements.txt via `poetry export --only main` (see tox update-requirements).
+dependencies = [
+    "jinja2>=3.1.4",
+    "pyyaml>=6.0.2",
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.fmt]
+optional = true
+
+[tool.poetry.group.fmt.dependencies]
+black = "^24.8.0"
+isort = "^5.13.2"
+
+[tool.poetry.group.lint]
+optional = true
+
+[tool.poetry.group.lint.dependencies]
+black = "^24.8.0"
+codespell = "^2.3.0"
+flake8 = "7.0.0"
+flake8-builtins = "^2.5.0"
+flake8-copyright = "^0.2.4"
+flake8-docstrings = "^1.7.0"
+isort = "^5.13.2"
+pep8-naming = "^0.14.1"
+pyproject-flake8 = "^7.0.0"
+
+[tool.poetry.group.unit]
+optional = true
+
+[tool.poetry.group.unit.dependencies]
+coverage = "^7.6.1"
+pytest = "^8.3.4"
+pytest-mock = "^3.14.0"
+
+[tool.poetry.group.integration]
+optional = true
+
+[tool.poetry.group.integration.dependencies]
+pytest = "^8.3.4"
+requests = "^2.32.3"
