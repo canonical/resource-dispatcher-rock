@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: test-rolebinding
+  labels:
+    user.kubeflow.org/enabled: "true"
+subjects:
+  - kind: ServiceAccount
+    name: seracc
+    namespace: '{% if some-invalid-tags %}'
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: test-role

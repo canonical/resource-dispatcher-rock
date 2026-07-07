@@ -1,0 +1,65 @@
+name: Application tests
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    name: Lint Check
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5.4.0
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: pip install tox
+
+    - name: Lint code
+      run: tox -e lint
+      working-directory: resource-dispatcher/app
+
+  unit:
+    name: Unit Test
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5.4.0
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: pip install tox
+
+    - name: Run unit tests
+      run: tox -e unit
+      working-directory: resource-dispatcher/app
+
+  integration:
+    name: Integration Test
+    runs-on: ubuntu-24.04
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5.4.0
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: pip install tox
+
+    - name: Run integration tests
+      run: tox -e integration
+      working-directory: resource-dispatcher/app

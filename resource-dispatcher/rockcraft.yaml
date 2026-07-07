@@ -27,7 +27,7 @@ parts:
       (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > ${CRAFT_PART_INSTALL}/usr/share/rocks/dpkg.query
   
   resource-dispatcher:
-    source: https://github.com/canonical/resource-dispatcher-image.git
+    source: app
     plugin: python
     stage-packages:
       - python3-venv
