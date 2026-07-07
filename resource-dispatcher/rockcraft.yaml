@@ -2,10 +2,10 @@ name: resource-dispatcher
 summary: Resource dispatcher in a Rock
 description: |
   HTTP server that should be used in the Kubernetes meta-controller charm called resource-dispatcher.
-  For each GET request on the /sync path, the resource dispatcher will generate Kubernetes manifests 
-  that need to be injected into the given Kubernetes namespace. Information about the Kubernetes 
-  namespace should be included in the body of the request. 
-version: "3.3"
+  For each GET request on the /sync path, the resource dispatcher will generate Kubernetes manifests
+  that need to be injected into the given Kubernetes namespace. Information about the Kubernetes
+  namespace should be included in the body of the request.
+version: "3.4"
 base: ubuntu@22.04
 license: Apache-2.0
 
@@ -25,7 +25,7 @@ parts:
     override-build: |
       mkdir -p ${CRAFT_PART_INSTALL}/usr/share/rocks
       (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" && dpkg-query -f '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n' -W) > ${CRAFT_PART_INSTALL}/usr/share/rocks/dpkg.query
-  
+
   resource-dispatcher:
     source: app
     plugin: python
@@ -37,7 +37,7 @@ parts:
     override-build: |
       craftctl default
       cp -a resource_dispatcher/. $CRAFT_PART_INSTALL
-  
+
   non-root-user:
     plugin: nil
     after: [resource-dispatcher]

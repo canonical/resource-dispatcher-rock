@@ -21,19 +21,22 @@ PROFILE_A = "profile-a"
 PROFILE_B = "profile-b"
 PROFILE_A_SECRET = "profile-pinned-secret"
 PROFILE_AGNOSTIC_SECRET = "mlpipeline-minio-artifact"
+CONFLICT_SECRET_NAME = "mlpipeline-minio-artifact"
+CONFLICT_PINNED_ACCESS_KEY = "pinned-access-key"
+CONFLICT_GLOBAL_ACCESS_KEY = "value"
 
 EXPECTED_ATTACHMENTS = [
     {
         "apiVersion": "v1",
         "kind": "Secret",
         "metadata": {"name": "mlpipeline-minio-artifact2", "namespace": "someName"},
-        "stringData": {"AWS_ACCESS_KEY_ID": "value", "AWS_SECRET_ACCESS_KEY": "value"},
+        "stringData": {"accesskey": "value", "secretkey": "value"},
     },
     {
         "apiVersion": "v1",
         "kind": "Secret",
         "metadata": {"name": "mlpipeline-minio-artifact", "namespace": "someName"},
-        "stringData": {"AWS_ACCESS_KEY_ID": "value", "AWS_SECRET_ACCESS_KEY": "value"},
+        "stringData": {"accesskey": "value", "secretkey": "value"},
     },
     {
         "apiVersion": "v1",
@@ -280,3 +283,24 @@ def test_namespace_agnostic_manifest_applied(server, namespace):
 
     assert matched_secret is not None, f"Should find {PROFILE_AGNOSTIC_SECRET} in {namespace}"
     assert matched_secret["metadata"]["namespace"] == namespace, f"Namespace should be {namespace}"
+
+
+@pytest.mark.parametrize(
+    "namespace, expected_access_key",
+    [
+        (PROFILE_A, CONFLICT_PINNED_ACCESS_KEY),
+        (PROFILE_B, CONFLICT_GLOBAL_ACCESS_KEY),
+    ],
+)
+def test_conflict_resolution_pinned_overrides_global(server, namespace, expected_access_key):
+    """Verify a namespace-pinned manifest shadows the global manifest of the same name."""
+    result = _post_sync(server, _build_request(namespace))
+    matched_secret = _find_secret_in_controller_sync_result(result, CONFLICT_SECRET_NAME)
+
+    assert (
+        matched_secret is not None
+    ), f"Should find '{CONFLICT_SECRET_NAME}' in namespace '{namespace}'"
+    assert matched_secret["stringData"]["accesskey"] == expected_access_key, (
+        f"Expected access key '{expected_access_key}' for namespace '{namespace}', "
+        f"got '{matched_secret['stringData']['accesskey']}'"
+    )
