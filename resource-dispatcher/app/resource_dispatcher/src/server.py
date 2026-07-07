@@ -116,7 +116,7 @@ def generate_manifests(manifest_folder: str, namespace: str) -> list[dict]:
     """For each file in templates_folder generate a yaml with populated context."""
     manifest_files = glob.glob(f"{manifest_folder}/**/*.yaml", recursive=True)
     logger.info(f"found files {manifest_files}")
-    manifests = []
+    candidates = []
     for manifest_file in manifest_files:
         with open(manifest_file) as f:
             try:
@@ -145,6 +145,68 @@ def generate_manifests(manifest_folder: str, namespace: str) -> list[dict]:
             )
             continue
 
+        is_pinned = bool(manifest_namespace)
         manifest.setdefault("metadata", {})["namespace"] = namespace
-        manifests.append(manifest)
-    return manifests
+        candidates.append((is_pinned, manifest))
+
+    return _resolve_manifest_conflicts(candidates, namespace)
+
+
+def _resolve_manifest_conflicts(candidates: list[tuple[bool, dict]], namespace: str) -> list[dict]:
+    """Resolve name conflicts by preferring namespace-pinned manifests over global ones.
+
+    When a namespace-pinned manifest and a global (unpinned) manifest share the
+    same name, the pinned manifest takes precedence for that namespace.  This
+    allows per-profile overrides to shadow global defaults without breaking the
+    global default for every other namespace.
+
+    If multiple pinned manifests for the same namespace share a name (which the
+    charm-side validation should already prevent), the first encountered is kept
+    and a warning is logged.
+
+    Args:
+        candidates: (is_pinned, manifest) pairs that have already passed the
+                    namespace-filter step in generate_manifests.
+        namespace:  The target namespace being processed (used for log messages).
+
+    Returns:
+        Deduplicated manifest list.
+    """
+    # Get manifests by name first
+    by_name: dict[str, list[tuple[bool, dict]]] = {}
+    for is_pinned, manifest in candidates:
+        name = manifest.get("metadata", {}).get("name")
+        by_name.setdefault(name, []).append((is_pinned, manifest))
+
+    result = []
+    for name, group in by_name.items():
+        pinned = [m for is_pinned, m in group if is_pinned]
+        unpinned = [m for is_pinned, m in group if not is_pinned]
+
+        if pinned:
+            if unpinned:
+                logger.info(
+                    "Manifest '%s' has both a namespace-pinned and a global version for namespace "
+                    "'%s'; using the namespace-pinned version.",
+                    name,
+                    namespace,
+                )
+            if len(pinned) > 1:
+                logger.warning(
+                    "Multiple namespace-pinned manifests found for name '%s' in namespace '%s'; "
+                    "using the first one.",
+                    name,
+                    namespace,
+                )
+            result.append(pinned[0])
+        elif unpinned:
+            if len(unpinned) > 1:
+                logger.warning(
+                    "Multiple global manifests found for name '%s' in namespace '%s'; "
+                    "using the first one.",
+                    name,
+                    namespace,
+                )
+            result.append(unpinned[0])
+
+    return result
