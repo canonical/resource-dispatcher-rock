@@ -13,7 +13,7 @@ jobs:
     needs: [app-tests]
     # Build the rock only if the application tests passed or were skipped
     # (i.e. no application changes in this PR).
-    uses: canonical/charmed-kubeflow-workflows/.github/workflows/get-rocks-modified-and-build-scan-test-publish.yaml@fix/scope-rock-integration-tests
+    uses: canonical/charmed-kubeflow-workflows/.github/workflows/get-rocks-modified-and-build-scan-test-publish.yaml@main
     permissions:
       pull-requests: read
     secrets: inherit
