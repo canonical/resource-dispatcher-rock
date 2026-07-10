@@ -127,3 +127,21 @@ class TestResolveManifestConflicts:
         result = _resolve_manifest_conflicts(candidates, "ns")
         assert len(result) == 1
         assert result[0]["stringData"]["accesskey"] == "first"
+
+    def test_same_name_different_kinds_are_kept(self):
+        """Distinct kinds sharing a name are not treated as a conflict."""
+        secret = {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+        }
+        service_account = {
+            "apiVersion": "v1",
+            "kind": "ServiceAccount",
+            "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+        }
+        candidates = [(False, secret), (False, service_account)]
+        result = _resolve_manifest_conflicts(candidates, "ns")
+        kinds = {m["kind"] for m in result}
+        assert kinds == {"Secret", "ServiceAccount"}
+        assert len(result) == 2

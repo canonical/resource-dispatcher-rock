@@ -160,9 +160,11 @@ def _resolve_manifest_conflicts(candidates: list[tuple[bool, dict]], namespace: 
     allows per-profile overrides to shadow global defaults without breaking the
     global default for every other namespace.
 
-    If multiple pinned manifests for the same namespace share a name (which the
-    charm-side validation should already prevent), the first encountered is kept
-    and a warning is logged.
+    The key for conflicts is the tuple (apiVersion, kind, name).
+
+    If multiple pinned manifests for the same namespace share an identity (which
+    the charm-side validation should already prevent), the first encountered is
+    kept and a warning is logged.
 
     Args:
         candidates: (is_pinned, manifest) pairs that have already passed the
@@ -172,29 +174,36 @@ def _resolve_manifest_conflicts(candidates: list[tuple[bool, dict]], namespace: 
     Returns:
         Deduplicated manifest list.
     """
-    # Get manifests by name first
-    by_name: dict[str, list[tuple[bool, dict]]] = {}
+    # Group manifests by (apiVersion, kind, name)
+    by_identity: dict[tuple[str, str, str], list[tuple[bool, dict]]] = {}
     for is_pinned, manifest in candidates:
-        name = manifest.get("metadata", {}).get("name")
-        by_name.setdefault(name, []).append((is_pinned, manifest))
+        identity = (
+            manifest.get("apiVersion", ""),
+            manifest.get("kind", ""),
+            manifest.get("metadata", {}).get("name"),
+        )
+        by_identity.setdefault(identity, []).append((is_pinned, manifest))
 
     result = []
-    for name, group in by_name.items():
+    for identity, group in by_identity.items():
+        api_version, kind, name = identity
         pinned = [m for is_pinned, m in group if is_pinned]
         unpinned = [m for is_pinned, m in group if not is_pinned]
 
         if pinned:
             if unpinned:
                 logger.info(
-                    "Manifest '%s' has both a namespace-pinned and a global version for namespace "
-                    "'%s'; using the namespace-pinned version.",
+                    "Manifest '%s/%s' has both a namespace-pinned and a global version for "
+                    "namespace '%s'; using the namespace-pinned version.",
+                    kind,
                     name,
                     namespace,
                 )
             if len(pinned) > 1:
                 logger.warning(
-                    "Multiple namespace-pinned manifests found for name '%s' in namespace '%s'; "
+                    "Multiple namespace-pinned manifests found for '%s/%s' in namespace '%s'; "
                     "using the first one.",
+                    kind,
                     name,
                     namespace,
                 )
@@ -202,8 +211,9 @@ def _resolve_manifest_conflicts(candidates: list[tuple[bool, dict]], namespace: 
         elif unpinned:
             if len(unpinned) > 1:
                 logger.warning(
-                    "Multiple global manifests found for name '%s' in namespace '%s'; "
+                    "Multiple global manifests found for '%s/%s' in namespace '%s'; "
                     "using the first one.",
+                    kind,
                     name,
                     namespace,
                 )
