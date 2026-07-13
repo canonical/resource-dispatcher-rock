@@ -128,20 +128,52 @@ class TestResolveManifestConflicts:
         assert len(result) == 1
         assert result[0]["stringData"]["accesskey"] == "first"
 
-    def test_same_name_different_kinds_are_kept(self):
-        """Distinct kinds sharing a name are not treated as a conflict."""
-        secret = {
-            "apiVersion": "v1",
-            "kind": "Secret",
-            "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
-        }
-        service_account = {
-            "apiVersion": "v1",
-            "kind": "ServiceAccount",
-            "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
-        }
-        candidates = [(False, secret), (False, service_account)]
+    @pytest.mark.parametrize(
+        "manifest_a, manifest_b",
+        [
+            pytest.param(
+                {
+                    "apiVersion": "v1",
+                    "kind": "Secret",
+                    "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+                },
+                {
+                    "apiVersion": "v1",
+                    "kind": "ServiceAccount",
+                    "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+                },
+                id="same_apiVersion_same_name_different_kind",
+            ),
+            pytest.param(
+                {
+                    "apiVersion": "v1",
+                    "kind": "Secret",
+                    "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+                },
+                {
+                    "apiVersion": "secrets.hashicorp.com/v1beta1",
+                    "kind": "Secret",
+                    "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+                },
+                id="same_kind_same_name_different_apiVersion",
+            ),
+            pytest.param(
+                {
+                    "apiVersion": "v1",
+                    "kind": "Secret",
+                    "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+                },
+                {
+                    "apiVersion": "secrets.hashicorp.com/v1beta1",
+                    "kind": "ServiceAccount",
+                    "metadata": {"name": "kserve-controller-s3", "namespace": "ns"},
+                },
+                id="different_apiVersion_different_kind_same_name",
+            ),
+        ],
+    )
+    def test_distinct_identities_are_kept(self, manifest_a, manifest_b):
+        """Manifests with different (apiVersion, kind, name) keys are not treated as conflicts."""
+        candidates = [(False, manifest_a), (False, manifest_b)]
         result = _resolve_manifest_conflicts(candidates, "ns")
-        kinds = {m["kind"] for m in result}
-        assert kinds == {"Secret", "ServiceAccount"}
         assert len(result) == 2

@@ -162,7 +162,7 @@ def _resolve_manifest_conflicts(candidates: list[tuple[bool, dict]], namespace: 
 
     The key for conflicts is the tuple (apiVersion, kind, name).
 
-    If multiple pinned manifests for the same namespace share an identity (which
+    If multiple pinned manifests for the same namespace share a key (which
     the charm-side validation should already prevent), the first encountered is
     kept and a warning is logged.
 
